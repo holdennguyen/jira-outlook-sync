@@ -1,7 +1,7 @@
-# Jira-Outlook Reminder Automation - Quick Reference
+# Jira-Outlook Reminder Automation
 
 ## Overview
-This proposal defines automation to create Outlook calendar reminders based on Jira ticket planned start and end dates. This solves the problem of missed deadlines by automatically syncing work schedules from Jira into team members' Outlook calendars.
+This is the OpenSpec proposal for the Jira-Outlook Sync automation. It defines automation to create Outlook calendar reminders based on Jira ticket planned start and end dates, solving the problem of missed deadlines by automatically syncing work schedules from Jira into team members' Outlook calendars.
 
 ## Proposal Files
 
@@ -54,23 +54,30 @@ This proposal defines automation to create Outlook calendar reminders based on J
 
 Each requirement includes multiple scenarios with GIVEN/WHEN/THEN format.
 
-## Next Steps
+## Implementation Status
+
+**Current Phase**: Planning (Proposal Approved ✅)  
+**Tasks Completed**: 0/75  
+**Next Phase**: Development
+
+## Getting Started
 
 ### 1. Review the Proposal
-- Read [proposal.md](./proposal.md) for context
-- Review [design.md](./design.md) for technical approach
-- Check [specs/jira-outlook-integration/spec.md](./specs/jira-outlook-integration/spec.md) for detailed requirements
+```bash
+# View proposal overview
+cat proposal.md
 
-### 2. Approve or Request Changes
-- If approved: Proceed to implementation
-- If changes needed: Update proposal files and re-validate
+# Review technical design
+cat design.md
 
-### 3. Implementation
-- Follow [tasks.md](./tasks.md) checklist sequentially
-- Mark tasks as complete: `- [x]` in tasks.md
-- Run `openspec validate add-jira-outlook-reminder-automation --strict` regularly
+# Check detailed requirements
+cat specs/jira-outlook-integration/spec.md
 
-### 4. Validation
+# View implementation checklist
+cat tasks.md
+```
+
+### 2. Validate with OpenSpec
 ```bash
 # Check proposal validity
 openspec validate add-jira-outlook-reminder-automation --strict
@@ -81,6 +88,12 @@ openspec show add-jira-outlook-reminder-automation
 # Check task progress
 openspec list
 ```
+
+### 3. Start Implementation
+- Follow [tasks.md](./tasks.md) checklist sequentially
+- Mark tasks as complete: `- [x]` in tasks.md
+- Implement features in `scripts/` directory
+- Add tests in `tests/` directory
 
 ## Key Features
 
