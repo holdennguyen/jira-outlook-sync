@@ -1,0 +1,5 @@
+# Production dependencies
+requests>=2.31.0
+msal>=1.25.0
+python-dotenv>=1.0.0
+PyYAML>=6.0.1
