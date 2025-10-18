@@ -1,5 +1,4 @@
-# Production dependencies
+# Production dependencies - required to run jira-outlook-sync
+click>=8.0.0
 requests>=2.31.0
-msal>=1.25.0
-python-dotenv>=1.0.0
-PyYAML>=6.0.1
+colorama>=0.4.6

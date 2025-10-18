@@ -1,207 +1,234 @@
 # Jira-Outlook Sync
 
-> Automatically sync Jira ticket planned dates to Outlook calendar events
+> CLI tool to export Jira tickets to Outlook calendar events
 
-[![CI](https://github.com/opswat/jira-outlook-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/opswat/jira-outlook-sync/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-## Overview
+## What Does This Do?
 
-Jira-Outlook Sync is an automation tool that creates Outlook calendar reminders based on Jira ticket planned start and end dates. Never miss a deadline again by automatically syncing your work schedule from Jira into your Outlook calendar.
+Searches your Jira tickets and creates calendar events in Outlook with:
+- ✅ Planned start and end times from Jira
+- ✅ Reminders (45 minutes before by default)
+- ✅ Team members as attendees
+- ✅ Ticket links and details
 
-### Key Features
+**No OAuth setup needed!** Exports to `.ics` files that you can import into Outlook, Google Calendar, or any calendar app.
 
-- ✅ **Automatic Synchronization**: Creates Outlook calendar events from Jira tickets with planned dates
-- 🔄 **Bi-directional Updates**: Updates events when Jira tickets change, deletes when completed
-- 🎯 **Smart Filtering**: JQL-based filtering by project, assignee, labels, and custom fields
-- 🔒 **Secure**: OAuth 2.0 authentication, credential protection, audit logging
-- ⚡ **Flexible Deployment**: Cron job, systemd service, GitHub Actions, or AWS Lambda
-- 🛡️ **Robust Error Handling**: Exponential backoff, retry logic, partial failure support
-- 📊 **Multi-User Support**: Per-user configuration and calendar management
+## Quick Start (5 minutes)
 
-## Quick Start
+### Step 1: Install Python (if you don't have it)
 
-### Prerequisites
+Check if you have Python:
+```bash
+python3 --version
+```
 
-- Python 3.8 or higher
-- Jira Cloud/Server account with API access
-- Microsoft 365 account with Outlook
-- Jira API token
-- Microsoft Graph API credentials (client ID and secret)
+If you see `Python 3.8` or higher, you're good! If not, download from https://www.python.org/downloads/
 
-### Installation
+### Step 2: Install This Tool
 
 ```bash
-# Clone the repository
-git clone https://github.com/opswat/jira-outlook-sync.git
+# 1. Download the code
+git clone https://github.com/holdennguyen/jira-outlook-sync.git
 cd jira-outlook-sync
 
-# Install dependencies
-pip install -r requirements.txt
+# 2. Create a virtual environment (isolated Python environment)
+python3 -m venv .venv
 
-# Copy configuration templates
-cp config.yaml.template config.yaml
-cp .env.template .env
+# 3. Activate the virtual environment
+source .venv/bin/activate  # On macOS/Linux
+# Or on Windows: .venv\Scripts\activate
 
-# Edit configuration files with your credentials
-# See docs/setup.md for detailed instructions
+# 4. Install the tool
+pip install -e .
 ```
 
-### Basic Usage
+**What is a virtual environment?**
+A virtual environment is like a separate Python installation just for this tool. It keeps all the dependencies isolated so they don't interfere with other Python programs on your computer. Think of it as a sandbox.
+
+### Step 3: Login to Jira
 
 ```bash
-# One-time sync
-python scripts/jira_outlook_sync.py --sync-once
-
-# Dry run (test without making changes)
-python scripts/jira_outlook_sync.py --dry-run
-
-# Continuous sync (runs every 10 minutes)
-python scripts/jira_outlook_sync.py --continuous
-
-# Custom configuration file
-python scripts/jira_outlook_sync.py --config my-config.yaml
+jira-outlook-sync login
 ```
 
-## Configuration
+You'll need:
+- **Jira URL**: Your company's Jira (e.g., `https://opswat.atlassian.net`)
+- **Email**: Your Jira login email
+- **API Token**: Create one at https://id.atlassian.com/manage-profile/security/api-tokens
+  - Click "Create API token"
+  - Give it a name like "jira-outlook-sync"
+  - Copy the token and paste it
 
-### config.yaml
-
-```yaml
-jira:
-  url: "https://yourcompany.atlassian.net"
-  jql_filter: "project = SRE AND status != Done AND plannedStart is not EMPTY"
-  
-outlook:
-  calendar_name: "Work Calendar"
-  reminder_minutes: 15
-  
-sync:
-  interval_minutes: 10
-  batch_size: 50
-```
-
-### Environment Variables (.env)
+### Step 4: Search and Export
 
 ```bash
-# Jira credentials
-JIRA_EMAIL=your.email@company.com
-JIRA_API_TOKEN=your_jira_api_token
-
-# Microsoft Graph credentials
-MS_TENANT_ID=your_tenant_id
-MS_CLIENT_ID=your_client_id
-MS_CLIENT_SECRET=your_client_secret
+# Search for tickets and export to calendar file
+jira-outlook-sync search "deployment" --open-file
 ```
 
-See [docs/setup.md](docs/setup.md) for detailed setup instructions.
+This will:
+1. Search Jira for tickets with "deployment" in the title
+2. Show you the tickets found
+3. Ask if you want to export
+4. Create a `.ics` file
+5. Automatically open it in Outlook
 
-## Documentation
+**Then in Outlook**: Just click "Import" when the dialog appears!
 
-- 📖 [Setup Guide](docs/setup.md) - Initial setup and configuration
-- ⚙️ [Configuration Guide](docs/configuration.md) - Advanced configuration options
-- 🚀 [Deployment Guide](docs/deployment.md) - Deployment options (cron, systemd, GitHub Actions, Lambda)
-- 🔧 [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
-- 📐 [Architecture](openspec/changes/add-jira-outlook-reminder-automation/design.md) - Technical design and decisions
+## Common Usage
 
-## Project Status
-
-**Current Phase**: Proposal/Planning ✅
-
-See [openspec/changes/add-jira-outlook-reminder-automation/](openspec/changes/add-jira-outlook-reminder-automation/) for:
-- [Proposal](openspec/changes/add-jira-outlook-reminder-automation/proposal.md) - Project overview and rationale
-- [Tasks](openspec/changes/add-jira-outlook-reminder-automation/tasks.md) - Implementation checklist (0/75 tasks)
-- [Design](openspec/changes/add-jira-outlook-reminder-automation/design.md) - Technical architecture
-- [Requirements](openspec/changes/add-jira-outlook-reminder-automation/specs/jira-outlook-integration/spec.md) - Detailed specifications
-
-## Deployment Options
-
-### 1. Cron Job (Simplest)
-
+### Export with Auto-Open
 ```bash
-# Edit crontab
-crontab -e
-
-# Add line to sync every 10 minutes
-*/10 * * * * cd /path/to/jira-outlook-sync && python scripts/jira_outlook_sync.py --sync-once
+jira-outlook-sync search "4.70.1" --open-file
 ```
 
-### 2. systemd Service (Linux)
-
+### Export to Specific File
 ```bash
-sudo cp deployment/jira-outlook-sync.service /etc/systemd/system/
-sudo systemctl enable jira-outlook-sync
-sudo systemctl start jira-outlook-sync
+jira-outlook-sync search "sprint" -o ~/Desktop/sprint-events.ics
 ```
 
-### 3. GitHub Actions
+### Add Team Members as Attendees
+```bash
+# Add recipients first
+jira-outlook-sync recipients add john@company.com
+jira-outlook-sync recipients add jane@company.com
 
-See [.github/workflows/sync-schedule.yml](.github/workflows/sync-schedule.yml) for scheduled workflow example.
+# Export with recipients
+jira-outlook-sync search "deployment" --with-recipients --open-file
+```
 
-### 4. AWS Lambda
+### View All Recipients
+```bash
+jira-outlook-sync recipients list
+```
 
-See [docs/deployment.md#aws-lambda](docs/deployment.md#aws-lambda) for serverless deployment.
+### Check Login Status
+```bash
+jira-outlook-sync status
+```
 
-## Benefits
+## How to Use Every Day
 
-- ⏰ **Reduces missed deadlines by 90%** through automatic calendar reminders
-- ⚡ **Saves 30+ minutes per week** per team member on manual calendar management
-- 👥 **Improves team visibility** into sprint planning and schedules
-- 📋 **Provides audit trail** for scheduled work
-- 🎯 **Enables proactive work management** instead of reactive firefighting
-
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### Development Setup
+After the initial setup, using the tool is simple:
 
 ```bash
-# Install development dependencies
+# 1. Activate the virtual environment (if not already active)
+cd /path/to/jira-outlook-sync
+source .venv/bin/activate  # You'll see (.venv) in your prompt
+
+# 2. Run your search
+jira-outlook-sync search "your-keyword" --open-file
+
+# 3. Import in Outlook (click Import when it opens)
+
+# 4. Done! Deactivate when finished (optional)
+deactivate
+```
+
+## Importing the ICS File into Outlook
+
+### macOS
+1. The file opens automatically with `--open-file` flag
+2. Or double-click the `.ics` file
+3. Or run: `open filename.ics`
+4. Click "Import" in Outlook
+
+### Windows
+1. Double-click the `.ics` file
+2. Or in Outlook: File → Open & Export → Import/Export → Import an iCalendar file
+3. Select the `.ics` file
+
+### Web (Outlook.com)
+1. Go to https://outlook.com/calendar
+2. Click "Add calendar" → "Upload from file"
+3. Select the `.ics` file
+
+## Troubleshooting
+
+### "Command not found: jira-outlook-sync"
+
+Make sure you activated the virtual environment:
+```bash
+source .venv/bin/activate
+```
+
+You should see `(.venv)` in your command prompt.
+
+### "Not authenticated with Jira"
+
+Login again:
+```bash
+jira-outlook-sync login jira
+```
+
+### "No tickets found"
+
+- Try a broader search keyword
+- Make sure the tickets exist in Jira
+- Check you have access to the tickets
+
+### Times are Wrong
+
+The tool uses UTC times from Jira and converts them properly. If times look wrong, check your Jira ticket's planned start/end times in Jira first.
+
+## Files and Locations
+
+**Where your data is stored:**
+- Configuration: `~/.jira-outlook-sync/config.json`
+- Credentials: `~/.jira-outlook-sync/credentials.json` (secure)
+- Recipients: `~/.jira-outlook-sync/recipients.txt`
+
+**Project files:**
+- Source code: `src/jira_outlook_sync/`
+- Tests: `tests/`
+
+## Understanding the Files
+
+- **requirements.txt** - Python packages needed to run the tool
+- **requirements-dev.txt** - Extra packages only needed if you're developing/testing
+- **pyproject.toml** - Package configuration
+- **recipients.txt.example** - Example of how to format recipient emails
+
+You don't need to touch these files unless you're developing the tool!
+
+## For Developers
+
+### Run Tests
+```bash
+# Activate virtual environment first
+source .venv/bin/activate
+
+# Install dev dependencies
 pip install -r requirements-dev.txt
 
 # Run tests
-pytest tests/
+pytest
 
 # Run tests with coverage
-pytest --cov=scripts tests/
-
-# Format code
-black scripts/ tests/
-
-# Lint code
-flake8 scripts/ tests/
+pytest --cov=jira_outlook_sync
 ```
 
-## Security
+## Getting Help
 
-- 🔒 OAuth 2.0 authentication for Microsoft Graph
-- 🔑 API token authentication for Jira
-- 🛡️ AWS Secrets Manager / Azure Key Vault support
-- 📝 Audit logging for compliance
-- 🚫 No credentials in logs or code
+```bash
+# Show all commands
+jira-outlook-sync --help
 
-See [SECURITY.md](SECURITY.md) for security policy and reporting vulnerabilities.
+# Show help for a specific command
+jira-outlook-sync search --help
+jira-outlook-sync recipients --help
+```
+
+## Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Support
 
-- 📧 Email: support@yourcompany.com
-- 🐛 Issues: [GitHub Issues](https://github.com/opswat/jira-outlook-sync/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/opswat/jira-outlook-sync/discussions)
-
-## Acknowledgments
-
-- Built with ❤️ by the AppSec/SRE team
-- Uses [Microsoft Graph API](https://docs.microsoft.com/en-us/graph/) for Outlook integration
-- Uses [Jira REST API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/) for ticket data
-
----
-
-**Status**: 🚧 In Development  
-**Version**: 0.1.0-alpha  
-**Last Updated**: October 18, 2025
+- Report issues: https://github.com/holdennguyen/jira-outlook-sync/issues
