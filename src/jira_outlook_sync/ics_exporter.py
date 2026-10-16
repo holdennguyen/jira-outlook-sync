@@ -19,6 +19,7 @@ class ICSExporter:
         output_path: Path,
         reminder_minutes: int = 45,
         recipients: List[str] = None,
+        optional_recipients: List[str] = None,
     ) -> None:
         """
         Export Jira tickets to ICS file
@@ -27,9 +28,12 @@ class ICSExporter:
             tickets: List of Jira ticket dictionaries
             output_path: Path to save the ICS file
             reminder_minutes: Minutes before event to set reminder
-            recipients: List of email addresses to add as attendees
+            recipients: List of email addresses to add as required attendees
+            optional_recipients: List of email addresses to add as optional attendees
         """
-        ics_content = self._generate_ics(tickets, reminder_minutes, recipients or [])
+        ics_content = self._generate_ics(
+            tickets, reminder_minutes, recipients or [], optional_recipients or []
+        )
         
         # Write to file
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -40,6 +44,7 @@ class ICSExporter:
         tickets: List[Dict[str, Any]],
         reminder_minutes: int,
         recipients: List[str],
+        optional_recipients: List[str],
     ) -> str:
         """Generate ICS file content"""
         lines = [
@@ -53,7 +58,7 @@ class ICSExporter:
         ]
 
         for ticket in tickets:
-            event = self._generate_event(ticket, reminder_minutes, recipients)
+            event = self._generate_event(ticket, reminder_minutes, recipients, optional_recipients)
             if event:
                 lines.extend(event)
 
@@ -69,6 +74,7 @@ class ICSExporter:
         ticket: Dict[str, Any],
         reminder_minutes: int,
         recipients: List[str],
+        optional_recipients: List[str],
     ) -> List[str]:
         """Generate ICS event for a single ticket"""
         
@@ -125,6 +131,8 @@ class ICSExporter:
         # Add attendees if provided
         for recipient in recipients:
             lines.append(f"ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;CN={recipient}:mailto:{recipient}")
+        for recipient in optional_recipients:
+            lines.append(f"ATTENDEE;ROLE=OPT-PARTICIPANT;PARTSTAT=NEEDS-ACTION;CN={recipient}:mailto:{recipient}")
         
         # Add organizer (current user)
         if ticket.get("assignee_email"):

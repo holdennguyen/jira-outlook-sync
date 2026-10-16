@@ -119,12 +119,13 @@ def search(
 
     # Load recipients if needed
     recipients_list: List[str] = []
+    optional_recipients_list: List[str] = []
     if use_recipients:
         recipients_manager = RecipientsManager(config)
         if recipients_file:
-            recipients_list = recipients_manager.load_recipients(Path(recipients_file))
+            recipients_list, optional_recipients_list = recipients_manager.load_all(Path(recipients_file))
         else:
-            recipients_list = recipients_manager.load_recipients()
+            recipients_list, optional_recipients_list = recipients_manager.load_all()
 
         if not recipients_list:
             if not click.confirm("\n⚠️  No recipients found. Continue without recipients?"):
@@ -190,6 +191,7 @@ def search(
             output_path=output_path,
             reminder_minutes=reminder_minutes,
             recipients=recipients_list,
+            optional_recipients=optional_recipients_list,
         )
         click.echo(f"\n{Fore.GREEN}✅ Successfully exported to: {output_path}{Style.RESET_ALL}")
         

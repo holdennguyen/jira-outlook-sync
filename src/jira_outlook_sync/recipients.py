@@ -2,7 +2,7 @@
 
 import re
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from .config import Config
 
@@ -11,6 +11,7 @@ class RecipientsManager:
     """Manage email recipient lists"""
 
     EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+    OPTIONAL_HEADER = "[optional]"
 
     def __init__(self, config: Config) -> None:
         """Initialize recipients manager"""
@@ -19,20 +20,36 @@ class RecipientsManager:
 
     def load_recipients(self, file_path: Path = None) -> List[str]:
         """
-        Load recipients from file
-        
+        Load required recipients from file
+
         Args:
             file_path: Optional custom file path, uses default if None
-            
+
         Returns:
-            List of valid email addresses
+            List of valid required email addresses
+        """
+        return self.load_all(file_path)[0]
+
+    def load_all(self, file_path: Path = None) -> Tuple[List[str], List[str]]:
+        """
+        Load required and optional recipients from file
+
+        Emails listed after an `[optional]` line are optional attendees.
+
+        Args:
+            file_path: Optional custom file path, uses default if None
+
+        Returns:
+            Tuple of (required, optional) valid email addresses
         """
         file_path = file_path or self.recipients_file
 
         if not file_path.exists():
-            return []
+            return [], []
 
-        recipients = []
+        required: List[str] = []
+        optional: List[str] = []
+        current = required
         try:
             with open(file_path, "r") as f:
                 for line_num, line in enumerate(f, 1):
@@ -42,16 +59,20 @@ class RecipientsManager:
                     if not line or line.startswith("#"):
                         continue
 
+                    if line.lower() == self.OPTIONAL_HEADER:
+                        current = optional
+                        continue
+
                     # Validate email
                     if self.validate_email(line):
-                        recipients.append(line)
+                        current.append(line)
                     else:
                         print(f"⚠️  Line {line_num}: Skipped invalid email: {line}")
 
         except IOError as e:
             print(f"⚠️  Failed to read recipients file: {e}")
 
-        return recipients
+        return required, optional
 
     def add_recipient(self, email: str) -> bool:
         """
@@ -65,15 +86,24 @@ class RecipientsManager:
             return False
 
         # Check if already exists
-        recipients = self.load_recipients()
-        if email in recipients:
+        required, optional = self.load_all()
+        if email in required or email in optional:
             print(f"ℹ️  {email} is already in the recipients list")
             return True
 
-        # Append to file
+        # Insert before the [optional] section so it stays required
         try:
-            with open(self.recipients_file, "a") as f:
-                f.write(f"{email}\n")
+            lines = []
+            if self.recipients_file.exists():
+                lines = self.recipients_file.read_text().splitlines(keepends=True)
+            index = next(
+                (i for i, l in enumerate(lines) if l.strip().lower() == self.OPTIONAL_HEADER),
+                len(lines),
+            )
+            if index == len(lines) and lines and not lines[-1].endswith("\n"):
+                lines[-1] += "\n"
+            lines.insert(index, f"{email}\n")
+            self.recipients_file.write_text("".join(lines))
             print(f"✅ Added {email} to recipients list")
             return True
         except IOError as e:
@@ -91,8 +121,8 @@ class RecipientsManager:
             print("❌ Recipients file does not exist")
             return False
 
-        recipients = self.load_recipients()
-        if email not in recipients:
+        required, optional = self.load_all()
+        if email not in required and email not in optional:
             print(f"❌ {email} not found in recipients list")
             return False
 
@@ -114,18 +144,23 @@ class RecipientsManager:
 
     def list_recipients(self) -> List[str]:
         """Get and display all recipients"""
-        recipients = self.load_recipients()
+        required, optional = self.load_all()
 
-        if not recipients:
+        if not required and not optional:
             print("ℹ️  No recipients configured")
             print(f"\nAdd recipients with: jira-outlook-sync recipients add <email>")
             return []
 
-        print(f"\nCurrent recipients ({len(recipients)}):")
-        for i, email in enumerate(recipients, 1):
+        print(f"\nCurrent recipients ({len(required)}):")
+        for i, email in enumerate(required, 1):
             print(f"  {i}. {email}")
 
-        return recipients
+        if optional:
+            print(f"\nOptional recipients ({len(optional)}):")
+            for i, email in enumerate(optional, 1):
+                print(f"  {i}. {email}")
+
+        return required
 
     @staticmethod
     def validate_email(email: str) -> bool:
