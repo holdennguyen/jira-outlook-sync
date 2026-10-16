@@ -93,3 +93,12 @@ dmypy.json
 # Distribution / packaging
 *.manifest
 *.spec
+
+# Local data: exported calendars and recipient lists contain attendee emails
+*.ics
+recipients*.txt
+
+# Local AI assistant state
+.claude/
+.codex/
+.serena/
