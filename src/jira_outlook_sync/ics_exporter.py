@@ -3,7 +3,6 @@
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List
-import uuid
 
 
 class ICSExporter:
@@ -93,11 +92,15 @@ class ICSExporter:
         if not start_dt or not end_dt:
             return []
 
-        # Generate unique ID for the event
-        uid = f"{ticket['key']}-{uuid.uuid4().hex[:8]}@jira-outlook-sync"
+        # Stable ID per ticket so re-importing updates the existing event
+        uid = f"{ticket['key']}@jira-outlook-sync"
         
         # Current timestamp for DTSTAMP
-        now = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+        utc_now = datetime.utcnow()
+        now = utc_now.strftime("%Y%m%dT%H%M%SZ")
+
+        # Increases on every export so calendars treat it as the newest revision
+        sequence = int((utc_now - datetime(1970, 1, 1)).total_seconds())
         
         # Format dates for ICS in UTC (with Z suffix to indicate UTC)
         # This tells Outlook these are absolute UTC times
@@ -115,7 +118,7 @@ class ICSExporter:
             f"DESCRIPTION:{self._escape_text(self._build_description(ticket))}",
             f"LOCATION:{ticket['url']}",
             "STATUS:CONFIRMED",
-            "SEQUENCE:0",
+            f"SEQUENCE:{sequence}",
             "PRIORITY:5",
         ]
         
